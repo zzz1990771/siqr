@@ -88,19 +88,23 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #' @note in step 2 of the proposed algorithm, we may consider random sampling a "subsample" of size,
 #'       say 5n, of the augmented sample(with sample size n^2);
 #'        do it several times and take average of the estimates(need to write a sampling step, but not in this utility function
-siqr<-function (y, X, p, gamma.inital,maxiter,tol)
+siqr<-function (y, X, p=0.5, gamma.inital=NULL,maxiter=40,tol=1e-9)
 {
-flag.conv<-0; #flag whether maximum iteration is achieved
+  require(quantreg)
+  if(is.null(gamma.inital)){
+    gamma.inital <- coef(rq(y~X,tau=p))[-1]
+  }
+  flag.conv<-0; #flag whether maximum iteration is achieved
 
-gamma.new<-gamma.inital; #starting value
-gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
+  gamma.new<-gamma.inital; #starting value
+  gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
 
-n<-NROW(y); d<-NCOL(X);
-a<-rep(0,n); b<-rep(0,n); #h<-rep(0,n);
+  n<-NROW(y); d<-NCOL(X);
+  a<-rep(0,n); b<-rep(0,n); #h<-rep(0,n);
 
-iter<-1;
-gamma.old<-2*gamma.new;
-#gamma.old<-sign(gamma.old[1])*gamma.old/sqrt(sum(gamma.old^2));
+  iter<-1;
+  gamma.old<-2*gamma.new;
+
 
 while((iter < maxiter) & (sum((gamma.new-gamma.old)^2)>tol))
 #while(iter < maxiter)
