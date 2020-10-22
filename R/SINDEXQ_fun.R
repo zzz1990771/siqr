@@ -21,7 +21,7 @@ generate_data <- function(n,true.theta=c(1, 1, 1)/sqrt(3),sigma=0.1,family="Gaus
   #parameter setting
   c1 = sqrt(3)/2-1.645/sqrt(12) #0.3912
   c2 = sqrt(3)/2+1.645/sqrt(12)#1.3409
-  rho = 0.3
+  #rho = 0.3
 
   X = matrix(runif(length(true.theta)*n), ncol=length(true.theta))
   true.theta = sign(true.theta[1])*true.theta/sqrt(sum(true.theta^2));
@@ -88,7 +88,7 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #' @note in step 2 of the proposed algorithm, we may consider random sampling a "subsample" of size,
 #'       say 5n, of the augmented sample(with sample size n^2);
 #'        do it several times and take average of the estimates(need to write a sampling step, but not in this utility function
-siqr<-function (y, X, p=0.5, gamma.inital=NULL,maxiter=40,tol=1e-9)
+siqr<-function (y, X, p=0.5, gamma.inital=NULL, maxiter=40, tol=1e-9, method = "own")
 {
   require(quantreg)
   if(is.null(gamma.inital)){
@@ -97,7 +97,11 @@ siqr<-function (y, X, p=0.5, gamma.inital=NULL,maxiter=40,tol=1e-9)
   flag.conv<-0; #flag whether maximum iteration is achieved
 
   gamma.new<-gamma.inital; #starting value
-  gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
+  if(method == "Wu"){
+  }else{
+    gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
+  }
+  #gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
 
   n<-NROW(y); d<-NCOL(X);
   a<-rep(0,n); b<-rep(0,n); #h<-rep(0,n);
@@ -109,7 +113,7 @@ siqr<-function (y, X, p=0.5, gamma.inital=NULL,maxiter=40,tol=1e-9)
 while((iter < maxiter) & (sum((gamma.new-gamma.old)^2)>tol))
 #while(iter < maxiter)
  {
-  print(iter)
+ #print(iter)
  gamma.old<-gamma.new;
  iter<-iter+1;
  ####################################
@@ -173,7 +177,20 @@ flag.conv<-(iter < maxiter) ;# = 1 if converge; =0 if not converge
 #flag.conv<- 1- ((iter=maxiter)&(sum((gamma.new-gamma.old)^2)<tol))
 
 gamma<-gamma.new;
-list(gamma=gamma,flag.conv=flag.conv)
+names(gamma) <- colnames(X)
+
+si <- X%*%gamma
+hm <- KernSmooth::dpill(si,y);
+hp <- hm*(p*(1-p)/(dnorm(qnorm(p)))^2)^.2;
+
+yhat<-rep(0,n);
+for (i in 1:length(y)){
+  local_fit<-lprq0(si, y, hp, p, si[i]);
+  yhat[i]<-local_fit$fv;
+}
+
+
+list(gamma=gamma,flag.conv=flag.conv,yhat=yhat,rqfit=fit)
 }
 
 #' Main estimation function of single index quantile regression model.
