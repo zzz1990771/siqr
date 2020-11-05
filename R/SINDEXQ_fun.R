@@ -189,9 +189,98 @@ for (i in 1:length(y)){
   yhat[i]<-local_fit$fv;
 }
 
+err<- y-yhat;
+R<- sum(abs(err)+(2*p-1)*err)/n;
 
-list(gamma=gamma,flag.conv=flag.conv,yhat=yhat,rqfit=fit)
+list(gamma=gamma,flag.conv=flag.conv,X=X,y=y,yhat=yhat,p=p,rqfit=fit,MSAE = R)
 }
+
+
+#' plot function of siqr
+#'
+#'
+#' @param model.obj The SIQR model object
+#'
+#' @return None
+plot.si <- function(model.obj, bootstrap_interval = FALSE){
+  si <- model.obj$X%*%model.obj$gamma
+  y <- model.obj$y
+  plot(si,y,xlab = "Single Index", ylab = "Predicted Y",col="gray");
+  lines(sort(si),model.obj$yhat[order(si)],lty=1,lwd=1.5,col="red");
+
+  if(bootstrap_interval){
+    p <- model.obj$p
+    hm <- KernSmooth::dpill(si,y)
+    hp <- hm*(p*(1-p)/(dnorm(qnorm(p)))^2)^.2
+
+    #get residual
+    res <- y-model.obj$yhat
+    n <- length(res)
+
+    #get bootstrap y_hat
+    #v1
+    # B=100
+    # y_hat_B <- matrix(NA,length(y.B),B)
+    # for(b in 1:B){
+    #   #get residual bootstrap data
+    #   bs.index<-sample(n,replace=T)
+    #   res.B<-res[bs.index]
+    #   y.B<-model.obj$yhat+res.B
+    #   fit.B <- siqr(y.B, X, gamma.inital = gamma0, p=p,maxiter = 20,tol = 1e-6, method = "Wu")
+    #   y_hat_B[,b] <- fit.B$yhat
+    # }
+
+
+    #v2
+    B=100
+    y_hat_B <- matrix(NA,length(y),B)
+    for(b in 1:B){
+      for(i in 1:length(y)){
+        #get residual bootstrap data
+        bs.index<-sample(n,replace=T)
+        res.B<-res[bs.index]
+        y.B<-model.obj$yhat+res.B
+        fit.B <- lprq0(si, y.B, hp, tau=p, si[i])
+        y_hat_B[i,b] <- fit.B$fv
+      }
+    }
+
+    #get sd of bootstrap Y_hat
+    se_yhat <- apply(y_hat_B,1,sd)
+    #2*sd +/- original y_hat to form the interval
+    yhat_B_025 <- model.obj$yhat - 2 * se_yhat
+    yhat_B_975 <- model.obj$yhat + 2 * se_yhat
+    #plot
+    #plot.si(model.obj = model.obj)
+    lines(sort(si),yhat_B_025[order(si)],lty=6,lwd=1.5,col="blue")
+    lines(sort(si),yhat_B_975[order(si)],lty=6,lwd=1.5,col="blue")
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #' Main estimation function of single index quantile regression model.
 #' a two step method.

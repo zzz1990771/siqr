@@ -33,7 +33,7 @@ X <- data$X
 Y <- data$Y
 
 gamma0 <- c(1,2,3)
-B <- 200
+B <- 100
 #residual bootstrap
 fit <- siqr(Y, X, gamma.inital = NULL, p=0.5,maxiter = 30,tol = 1e-8)
 res <- Y - fit$yhat
