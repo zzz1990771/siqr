@@ -92,7 +92,7 @@ p_vec <- c(0.1,0.25,0.5,0.75,0.9)
 
 sim_results <- array(NA,dim = c(length(p_vec),ncol = 3,n_sim))
 for(m in 1:n_sim){
-  data <- generate_data(n)
+  data <- generate_data(n,setting = "setting3")
   X <- data$X
   Y <- data$Y
   est.coefficient.sim <- matrix(NA, nrow = length(p_vec), ncol = NCOL(X))

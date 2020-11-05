@@ -17,28 +17,38 @@
 
 ## Data generation function for simulation and demonstration
 ## A sine-bump setting has been employed.
-generate_data <- function(n,true.theta=c(1, 1, 1)/sqrt(3),sigma=0.1,family="Gaussian",ncopy=1){
-  #parameter setting
-  c1 = sqrt(3)/2-1.645/sqrt(12) #0.3912
-  c2 = sqrt(3)/2+1.645/sqrt(12)#1.3409
-  #rho = 0.3
+generate_data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1){
 
-  X = matrix(runif(length(true.theta)*n), ncol=length(true.theta))
-  true.theta = sign(true.theta[1])*true.theta/sqrt(sum(true.theta^2));
-  U = X%*%true.theta
-  si = sin( (U-c1)*pi/(c2 -c1) )
+  if(setting == "setting1"){
 
-  if(family=="Gaussian"){
+    #parameter setting
+    true.theta = if(is.null(true.theta)) c(1, 1, 1)/sqrt(3)
+    c1 = sqrt(3)/2-1.645/sqrt(12) #0.3912
+    c2 = sqrt(3)/2+1.645/sqrt(12)#1.3409
+
+    X = matrix(runif(length(true.theta)*n), ncol=length(true.theta))
+    true.theta = sign(true.theta[1])*true.theta/sqrt(sum(true.theta^2));
+    U = X%*%true.theta
+    si = sin( (U-c1)*pi/(c2 -c1) )
     y = si + rnorm(length(si),0,sigma)
-  }else if(family=="Binomial"){
-    py = exp(si)/(1+exp(si))
-    y = rbinom(length(si), size=1, prob=py)
-  }else if(family=="Poisson"){
-    py = exp(si)
-    y = rpois(length(si),py)
+    if(ncopy>1){
+      ylist <- lapply(vector(mode = "list", length = ncopy),function(x){si + rnorm(n,0,sigma)})
+    }
+  }else if(setting == "setting2"){
+
+  }else if(setting == "setting3"){
+    true.theta = if(is.null(true.theta)) c(1, 2)/sqrt(5)
+    X = matrix(rnorm(length(true.theta)*n), ncol=length(true.theta))
+    U = X%*%true.theta
+    si = 5*cos(U)+exp(-U^2)
+    e = rexp(n,rate=.5)
+    y = si+e;
+    if(ncopy>1){
+      ylist <- lapply(vector(mode = "list", length = ncopy),function(x){si + rexp(n,rate=.5)})
+    }
   }
+
   if(ncopy>1){
-    ylist <- lapply(vector(mode = "list", length = ncopy),function(x){si + rnorm(length(si),0,sigma)})
     return(list("X" = X, "Y" = ylist,"single_index_values"=si))
   }else{
     return(list("X" = X, "Y" = y,"single_index_values"=si))
