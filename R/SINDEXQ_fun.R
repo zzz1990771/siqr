@@ -7,7 +7,7 @@
 ################################################################################
 #library(stats);
 #library(quantreg); #will call function lprq(), rq()
-#library(lokern); # call function glkerns() to compute h_mean
+#library(lokern); # call function glkerns() to compute h.mean
 #library(mda) #call for polyreg(), this is not the right polyreg; use own
 #library(KernSmooth);
 #################################################################################
@@ -17,12 +17,12 @@
 
 ## Data generation function for simulation and demonstration
 ## A sine-bump setting has been employed.
-generate_data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1){
+generate.data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1){
 
   if(setting == "setting1"){
 
     #parameter setting
-    true.theta = if(is.null(true.theta)) c(1, 1, 1)/sqrt(3)
+    true.theta = if(is.null(true.theta)) c(1, 1, 1)/sqrt(3) else true.theta
     c1 = sqrt(3)/2-1.645/sqrt(12) #0.3912
     c2 = sqrt(3)/2+1.645/sqrt(12)#1.3409
 
@@ -37,7 +37,7 @@ generate_data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1
   }else if(setting == "setting2"){
 
   }else if(setting == "setting3"){
-    true.theta = if(is.null(true.theta)) c(1, 2)/sqrt(5)
+    true.theta = if(is.null(true.theta)) c(1, 2)/sqrt(5) else true.theta
     X = matrix(rnorm(length(true.theta)*n), ncol=length(true.theta))
     U = X%*%true.theta
     si = 5*cos(U)+exp(-U^2)
@@ -49,15 +49,15 @@ generate_data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1
   }
 
   if(ncopy>1){
-    return(list("X" = X, "Y" = ylist,"single_index_values"=si))
+    return(list("X" = X, "Y" = ylist,"single.index.values"=si))
   }else{
-    return(list("X" = X, "Y" = y,"single_index_values"=si))
+    return(list("X" = X, "Y" = y,"single.index.values"=si))
   }
 }
 
 
 #' A supporting function that return the local polynomial regression quantile.
-#' This estimates the quantile and its derivative at the point x_0
+#' This estimates the quantile and its derivative at the point x.0
 #'
 #' @param x covariate sequence; y - response sequence; they form a sample.
 #' @param h bandwidth(scalar); tau - left-tail probability
@@ -88,68 +88,68 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #'
 #' @param y response vector;
 #' @param X covariate matrix;
-#' @param p left-tail probability (quantile index), scalar
-#' @param gamma.inital starting value of gamma, the single index cooefficients
+#' @param tau left-tail probability (quantile index), scalar
+#' @param beta.inital starting value of beta, the single index coefficients
 #' @param maxiter max iteration number
 #' @param tol toleration for convergence
 #'
-#' @return gamma - index direction, unit norm, first nonneg component
-#'          flag.conv  - whether the iterations converge
+#' @return beta - the fitted single index coefficients with unit norm and first component being non negative
+#'         flag.conv  - whether the iterations converge
 #' @note in step 2 of the proposed algorithm, we may consider random sampling a "subsample" of size,
 #'       say 5n, of the augmented sample(with sample size n^2);
 #'        do it several times and take average of the estimates(need to write a sampling step, but not in this utility function
-siqr<-function (y, X, p=0.5, gamma.inital=NULL, maxiter=40, tol=1e-9, method = "own")
+siqr<-function (y, X, tau=0.5, beta.inital=NULL, maxiter=40, tol=1e-9, method = "own")
 {
   require(quantreg)
-  if(is.null(gamma.inital)){
-    gamma.inital <- coef(rq(y~X,tau=p))[-1]
+  if(is.null(beta.inital)){
+    beta.inital <- coef(rq(y~X,tau=tau))[-1]
   }
   flag.conv<-0; #flag whether maximum iteration is achieved
 
-  gamma.new<-gamma.inital; #starting value
+  beta.new<-beta.inital; #starting value
   if(method == "Wu"){
   }else{
-    gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
+    beta.new<-sign(beta.new[1])*beta.new/sqrt(sum(beta.new^2));
   }
-  #gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
+  #beta.new<-sign(beta.new[1])*beta.new/sqrt(sum(beta.new^2));
 
   n<-NROW(y); d<-NCOL(X);
   a<-rep(0,n); b<-rep(0,n); #h<-rep(0,n);
 
   iter<-1;
-  gamma.old<-2*gamma.new;
+  beta.old<-2*beta.new;
 
 
-while((iter < maxiter) & (sum((gamma.new-gamma.old)^2)>tol))
+while((iter < maxiter) & (sum((beta.new-beta.old)^2)>tol))
 #while(iter < maxiter)
  {
  #print(iter)
- gamma.old<-gamma.new;
+ beta.old<-beta.new;
  iter<-iter+1;
  ####################################
- #  step 1: compute a_j,b_j; j=1:n  #
+ #  step 1: compute a.j,b.j; j=1:n  #
  ####################################
   a<-rep(0,n); b<-rep(0,n);#h<-rep(0,n);
   x<-rep(0,n);
      for(jj in 1:d)
-     {x<-x+X[,jj]*gamma.old[jj]; #n-sequence, dim=null
-       #x0<-x0+X[j,jj]*gamma.old[jj]; #scalar
+     {x<-x+X[,jj]*beta.old[jj]; #n-sequence, dim=null
+       #x0<-x0+X[j,jj]*beta.old[jj]; #scalar
        }
    hm<-KernSmooth::dpill(x, y);
-   hp<-hm*(p*(1-p)/(dnorm(qnorm(p)))^2)^.2;
+   hp<-hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
  x0<-0;
  for(j in 1:n)
   {
      x0<-x[j];
-     fit<-lprq0(x, y, hp, p, x0)
+     fit<-lprq0(x, y, hp, tau, x0)
      a[j]<-fit$fv;
      b[j]<-fit$dv;
    }
 
  #############################
- # step 2: compute gamma.new #
+ # step 2: compute beta.new #
  #############################
- # here, let v_j=1/n;
+ # here, let v.j=1/n;
  ynew<-rep(0,n^2);
  xnew<-rep(0,n^2*d);
  xnew<-matrix(xnew,ncol=d);
@@ -161,11 +161,11 @@ while((iter < maxiter) & (sum((gamma.new-gamma.old)^2)>tol))
     }
   }
 
-  xg<-rep(0,n^2); #x*gamma
+  xg<-rep(0,n^2); #x*beta
   for(jj in 1:d)
-      {xg<-xg+xnew[,jj]*gamma.old[jj]; #n-sequence, dim=null
+      {xg<-xg+xnew[,jj]*beta.old[jj]; #n-sequence, dim=null
        }
-  xgh<-rep(0,n^2); #x*gamma/h
+  xgh<-rep(0,n^2); #x*beta/h
   for (i in 1:n)
   {   for (j in 1:n)
       {
@@ -173,36 +173,36 @@ while((iter < maxiter) & (sum((gamma.new-gamma.old)^2)>tol))
       }
    }
   wts<-dnorm(xgh);
-  #fit<-rq(ynew ~0+ xnew, weights = wts, tau = p, method="fn") ; #pfn for very large problems
-  fit<-rq(ynew ~0+ xnew, weights = wts, tau = p, ci = FALSE) ; #default: br method, for several thousand obs
+  #fit<-rq(ynew ~0+ xnew, weights = wts, tau = tau, method="fn") ; #pfn for very large problems
+  fit<-rq(ynew ~0+ xnew, weights = wts, tau = tau, ci = FALSE) ; #default: br method, for several thousand obs
           # 0, to exclude intercept
-  gamma.new<-fit$coef;
-  gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));   #normalize
+  beta.new<-fit$coef;
+  beta.new<-sign(beta.new[1])*beta.new/sqrt(sum(beta.new^2));   #normalize
 
 } #end iterates over iter;
 
 iter<-iter;
 
 flag.conv<-(iter < maxiter) ;# = 1 if converge; =0 if not converge
-#flag.conv<- 1- ((iter=maxiter)&(sum((gamma.new-gamma.old)^2)<tol))
+#flag.conv<- 1- ((iter=maxiter)&(sum((beta.new-beta.old)^2)<tol))
 
-gamma<-gamma.new;
-names(gamma) <- colnames(X)
+beta<-beta.new;
+names(beta) <- colnames(X)
 
-si <- X%*%gamma
+si <- X%*%beta
 hm <- KernSmooth::dpill(si,y);
-hp <- hm*(p*(1-p)/(dnorm(qnorm(p)))^2)^.2;
+hp <- hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
 
 yhat<-rep(0,n);
 for (i in 1:length(y)){
-  local_fit<-lprq0(si, y, hp, p, si[i]);
-  yhat[i]<-local_fit$fv;
+  local.fit<-lprq0(si, y, hp, tau, si[i]);
+  yhat[i]<-local.fit$fv;
 }
 
 err<- y-yhat;
-R<- sum(abs(err)+(2*p-1)*err)/n;
+R<- sum(abs(err)+(2*tau-1)*err)/n;
 
-list(gamma=gamma,flag.conv=flag.conv,X=X,y=y,yhat=yhat,p=p,rqfit=fit,MSAE = R)
+list(beta=beta,flag.conv=flag.conv,X=X,y=y,yhat=yhat,tau=tau,rqfit=fit,MSAE = R)
 }
 
 
@@ -212,211 +212,60 @@ list(gamma=gamma,flag.conv=flag.conv,X=X,y=y,yhat=yhat,p=p,rqfit=fit,MSAE = R)
 #' @param model.obj The SIQR model object
 #'
 #' @return None
-plot.si <- function(model.obj, bootstrap_interval = FALSE){
-  si <- model.obj$X%*%model.obj$gamma
+plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
+  si <- model.obj$X%*%model.obj$beta
   y <- model.obj$y
   plot(si,y,xlab = "Single Index", ylab = "Predicted Y",col="gray");
   lines(sort(si),model.obj$yhat[order(si)],lty=1,lwd=1.5,col="red");
 
-  if(bootstrap_interval){
-    p <- model.obj$p
+  if(bootstrap.interval){
+    tau <- model.obj$tau
     hm <- KernSmooth::dpill(si,y)
-    hp <- hm*(p*(1-p)/(dnorm(qnorm(p)))^2)^.2
+    hp <- hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2
 
     #get residual
     res <- y-model.obj$yhat
     n <- length(res)
 
-    #get bootstrap y_hat
+    #get bootstrap y.hat
     #v1
     # B=100
-    # y_hat_B <- matrix(NA,length(y.B),B)
+    # y.hat.B <- matrix(NA,length(y.B),B)
     # for(b in 1:B){
     #   #get residual bootstrap data
     #   bs.index<-sample(n,replace=T)
     #   res.B<-res[bs.index]
     #   y.B<-model.obj$yhat+res.B
-    #   fit.B <- siqr(y.B, X, gamma.inital = gamma0, p=p,maxiter = 20,tol = 1e-6, method = "Wu")
-    #   y_hat_B[,b] <- fit.B$yhat
+    #   fit.B <- siqr(y.B, X, beta.inital = beta0, tau=tau,maxiter = 20,tol = 1e-6, method = "Wu")
+    #   y.hat.B[,b] <- fit.B$yhat
     # }
 
 
     #v2
     B=100
-    y_hat_B <- matrix(NA,length(y),B)
+    y.hat.B <- matrix(NA,length(y),B)
     for(b in 1:B){
       for(i in 1:length(y)){
         #get residual bootstrap data
         bs.index<-sample(n,replace=T)
         res.B<-res[bs.index]
         y.B<-model.obj$yhat+res.B
-        fit.B <- lprq0(si, y.B, hp, tau=p, si[i])
-        y_hat_B[i,b] <- fit.B$fv
+        fit.B <- lprq0(si, y.B, hp, tau=tau, si[i])
+        y.hat.B[i,b] <- fit.B$fv
       }
     }
 
-    #get sd of bootstrap Y_hat
-    se_yhat <- apply(y_hat_B,1,sd)
-    #2*sd +/- original y_hat to form the interval
-    yhat_B_025 <- model.obj$yhat - 2 * se_yhat
-    yhat_B_975 <- model.obj$yhat + 2 * se_yhat
+    #get sd of bootstrap Y.hat
+    se.yhat <- apply(y.hat.B,1,sd)
+    #2*sd +/- original y.hat to form the interval
+    yhat.B.025 <- model.obj$yhat - 2 * se.yhat
+    yhat.B.975 <- model.obj$yhat + 2 * se.yhat
     #plot
     #plot.si(model.obj = model.obj)
-    lines(sort(si),yhat_B_025[order(si)],lty=6,lwd=1.5,col="blue")
-    lines(sort(si),yhat_B_975[order(si)],lty=6,lwd=1.5,col="blue")
+    lines(sort(si),yhat.B.025[order(si)],lty=6,lwd=1.5,col="blue")
+    lines(sort(si),yhat.B.975[order(si)],lty=6,lwd=1.5,col="blue")
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#' Main estimation function of single index quantile regression model.
-#' a two step method.
-#' revised version of index.gamma(), in that random sampling is implemented in its step 2
-#'
-#'
-#' @param y - response vector; X - covariate matrix;
-#' @param p - left-tail probability (quantile index), scalar
-#' @param gamma.inital - starting value of gamma
-#' @param maxiter
-#' @param tol
-#' @param subsize
-#' @param subrep
-#'
-#' @return gamma - index direction, unit norm, first nonneg component
-#'          flag.conv  - whether the iterations converge
-#' @note TBD
-index.gamma1<-function (y, X, p, gamma.inital,maxiter,tol,subsize,subrep)
-{
-flag.conv<-0; #flag whether maximum iteration is achieved
-
-gamma.new<-gamma.inital; #starting value
-gamma.new<-sign(gamma.new[1])*gamma.new/sqrt(sum(gamma.new^2));
-
-n<-NROW(y); d<-NCOL(X);
-a<-rep(0,n); b<-rep(0,n); #h<-rep(0,n);
-gamma.inter<-rep(0,d*subrep);
-
-iter<-1;
-gamma.old<-2*gamma.new;
-#gamma.old<-sign(gamma.old[1])*gamma.old/sqrt(sum(gamma.old^2));
-
-while((iter < maxiter) & (sum((gamma.new-gamma.old)^2)>tol))
-#while(iter < maxiter)
- {
- gamma.old<-gamma.new;
- iter<-iter+1;
- ####################################
- #  step 1: compute a_j,b_j; j=1:n  #
- ####################################
-  a<-rep(0,n); b<-rep(0,n);#h<-rep(0,n);
-  x<-rep(0,n);
-     for(jj in 1:d)
-     {x<-x+X[,jj]*gamma.old[jj]; #n-sequence, dim=null
-       #x0<-x0+X[j,jj]*gamma.old[jj]; #scalar
-       }
-   hm<-KernSmooth::dpill(x, y);
-   hp<-hm*(p*(1-p)/(dnorm(qnorm(p)))^2)^.2;
- x0<-0;
- for(j in 1:n)
-  {
-     x0<-x[j];
-     fit<-lprq0(x, y, hp, p, x0)
-     a[j]<-fit$fv;
-     b[j]<-fit$dv;
-   }
-
- #############################
- # step 2: compute gamma.new #
- #############################
- # here, let v_j=1/n;
- # augmented "observations"
- ynew<-rep(0,n^2);
- xnew<-rep(0,n^2*d);
- xnew<-matrix(xnew,ncol=d);
- for (i in 1:n)
-    { for (j in 1:n)
-      { ynew[(i-1)*n+j]<-y[i]-a[j];
-      for(jj in 1:d){ xnew[(i-1)*n+j,jj]<-b[j]*(X[i,jj]-X[j,jj]); }
-     }
-   }  #generated ynew and xnew
-  xg<-rep(0,n^2); #x*gamma
-  for(jj in 1:d)
-      {xg<-xg+xnew[,jj]*gamma.old[jj]; #n-sequence, dim=null
-       }
-  xgh<-rep(0,n^2); #x*gamma/h
-  for (i in 1:n)
-  {   for (j in 1:n)
-      {
-        xgh[(i-1)*n+j]<-xg[(i-1)*n+j]/hp;
-      }
-   }
- wts<-dnorm(xgh); #generated wts, the weights
-   ######################
-   #  sampling step
-   ######################
- gamma.inter<-rep(0,d*subrep);
- gamma.inter<-matrix(gamma.inter, ncol=subrep);  #to store intermediate gammas
- for (subiter in 1:subrep)
-  {   id.sample<-  sample(seq(1,n^2), subsize) #default: w/o replacement
-      subx<-xnew[id.sample,]
-      suby<-ynew[id.sample]
-      subw<-wts[id.sample]
-
-      subfit<-rq(suby ~0+ subx, weights = subw, tau = p, ci = FALSE) ; #default: br method, for several thousand obs
-          # 0, to exclude intercept
-    subgamma<-subfit$coef;
-    subgamma<-sign(subgamma)*subgamma/sqrt(sum(subgamma^2));   #normalize
-    gamma.inter[,subiter]<-subgamma;
-  }  #end iterates over subiter
- ###################################
- #take average of gamma estimates
- ###################################
- gamma.inter<-gamma.inter #dim: d by subrep
- gamma.new<-apply(gamma.inter,1,mean)
-
- gamma.new<- sign(gamma.new)*gamma.new/sqrt(sum(gamma.new^2))
-
-} #end iterates over iter;
-
-gamma.new<-gamma.new
-iter<-iter;
-
-flag.conv<-(iter < maxiter) ;# = 1 if converge; =0 if not converge
-#flag.conv<- 1- ((iter=maxiter)&(sum((gamma.new-gamma.old)^2)<tol))
-
-gamma<-gamma.new;
-list(gamma=gamma,flag.conv=flag.conv)
-}
-
-####################
-#end of index.gamma1
-#####################
-
-
-
 
 
 

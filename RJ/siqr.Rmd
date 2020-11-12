@@ -24,7 +24,7 @@ output: rticles::rjournal_article
 
 ### Boston Housing data
 
-```{r}
+```{r eval = FALSE}
 #source the functions. Will be changed to load package
 source("../R/SINDEXQ_fun.R")
 
@@ -42,81 +42,85 @@ y0<-medv - mean(medv)
 
 #result is not the same with Wu 2010 as initial was not normalized in Wu 2010
 #tianhai
-#gamma0 <- c(1,-1,0,-1);
-gamma0 <- NULL
-p_vec <- c(0.1,0.25,0.5,0.75,0.9)
-est.coefficient <- matrix(NA, nrow = 5, ncol = 6)
-est.coefficient[,1] <- p_vec
-for (i in 1:length(p_vec)){
-  est <- siqr(y0,X,gamma.inital = gamma0, p=p_vec[i],maxiter = 20,tol = 1e-6)
-  est.coefficient[i,2:5] <- est$gamma
-  est.coefficient[i,6]   <- est$MSAE
+#beta0 <- c(1,-1,0,-1);
+beta0 <- NULL
+tau.vec <- c(0.2,0.5,0.8)
+est.coefficient <- matrix(NA, nrow = length(tau.vec), ncol = 5)
+est.coefficient[,1] <- tau.vec
+for (i in 1:length(tau.vec)){
+  est <- siqr(y0,X,beta.inital = beta0, tau=tau.vec[i],maxiter = 20,tol = 1e-6)
+  est.coefficient[i,2:5] <- est$beta
 }
-colnames(est.coefficient) <- c("quantile tau",colnames(X),"Model average sum of absolute residual")
+colnames(est.coefficient) <- c("quantile tau",colnames(X))
 est.coefficient
 
 ```
 
-```{r}
-#Wu 2010
-gamma0 <- c(1,-1,0,-1);
-p_vec <- c(0.1,0.25,0.5,0.75,0.9)
-est.coefficient.Wu <- matrix(NA, nrow = 5, ncol = 6)
-est.coefficient.Wu[,1] <- p_vec
-for (i in 1:length(p_vec)){
-  est <- siqr(y0,X,gamma.inital = gamma0, p=p_vec[i],maxiter = 20,tol = 1e-6, method = "Wu")
-  est.coefficient.Wu[i,2:5] <- est$gamma
-  est.coefficient.Wu[i,6]   <- est$MSAE
-}
-colnames(est.coefficient.Wu) <- c("quantile tau",colnames(X),"Model average sum of absolute residual")
-est.coefficient.Wu
+
+```{r cache=TRUE, eval = FALSE}
+est.tau02 <- siqr(y0,X,beta.inital = NULL, tau=0.2)
+.plot.siqr(est.tau02,bootstrap.interval = TRUE)
 ```
 
-```{r}
-est <- siqr(y0,X,gamma.inital = NULL, p=0.5)
-plot.si(est)
-```
-```{r}
-plot.si(est,bootstrap_interval = TRUE)
+```{r cache=TRUE, eval = FALSE}
+est.tau05 <- siqr(y0,X,beta.inital = NULL, tau=0.5)
+.plot.siqr(est.tau05,bootstrap.interval = TRUE)
 ```
 
+```{r cache=TRUE, eval = FALSE}
+est.tau08 <- siqr(y0,X,beta.inital = NULL, tau=0.8)
+.plot.siqr(est.tau08,bootstrap.interval = TRUE)
+```
 
 ### Simulation
 
+```{r eval=FALSE}
+n <- 400
+beta0 <- c(1, 2)/sqrt(5)
+n.sim <- 100
+tau <- 0.5
 
-```{r eval = FALSE}
-n <- 200
-gamma0 <- c(1,2,3)
-n_sim <- 100
-p_vec <- c(0.1,0.25,0.5,0.75,0.9)
+data <- generate.data(n, true.theta=beta0, setting = "setting3",ncopy = n.sim)
 
-sim_results <- array(NA,dim = c(length(p_vec),ncol = 3,n_sim))
-for(m in 1:n_sim){
-  data <- generate_data(n,setting = "setting3")
+#paralell 
+library(parallel)
+library(foreach)
+cl<- makeCluster(12)
+doParallel::registerDoParallel(cl)
+sim.results <- foreach(m = 1:n.sim,.combine = "rbind") %dopar% {
   X <- data$X
-  Y <- data$Y
-  est.coefficient.sim <- matrix(NA, nrow = length(p_vec), ncol = NCOL(X))
-  for (i in 1:length(p_vec)){
-    est <- siqr(Y, X, gamma.inital = NULL, p=p_vec[i],maxiter = 30,tol = 1e-8)
-    est.coefficient.sim[i,] <- est$gamma
-  }
-  sim_results[,,m] <- est.coefficient.sim
+  Y <- data$Y[[m]]
+  est <- siqr(Y, X, beta.inital = NULL, tau=tau,maxiter = 30,tol = 1e-8)
+  est$beta
 }
-est.mean <- cbind(p_vec,apply(sim_results,c(1,2),mean))
-colnames(est.mean) <- c("quantile tau","X1","X2","X3")
-est.mean
 ```
 
-
-```{r eval = FALSE}
-#MC se
-est.mean <- cbind(p_vec,apply(sim_results,c(1,2),sd))
-colnames(est.mean) <- c("quantile tau","X1","X2","X3")
+```{r}
+tau <- 0.5
+sim.results <- readRDS("./sim.results.RDS")
+est.mean <- c(tau,apply(sim.results,2,mean))
+names(est.mean) <- c("tau","beta1.hat","beta2.hat")
 est.mean
 ```
 
 
 ```{r}
+est.se <- c(tau,apply(sim.results,2,sd))
+names(est.se) <- c("tau","beta1.se.hat","beta1.se.hat")
+est.se
+```
+
+```{r}
+boxplot(data.frame((sim.results)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient Estimates (100 replications)",horizontal = F)
+```
+
+
+```{r cache=TRUE, eval = FALSE}
+est.sim.05 <- siqr(data$Y[[1]],data$X,beta.inital = NULL, tau=0.5)
+.plot.siqr(est.sim.05,bootstrap.interval = TRUE)
+```
+
+```{r eval = FALSE}
 Sys.sleep(100)
 ```
 
