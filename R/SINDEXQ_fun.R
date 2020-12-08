@@ -103,6 +103,7 @@ siqr<-function (y, X, tau=0.5, beta.inital=NULL, maxiter=40, tol=1e-9, method = 
   require(quantreg)
   if(is.null(beta.inital)){
     beta.inital <- coef(rq(y~X,tau=tau))[-1]
+    beta.inital[1] <- abs(beta.inital[1])
   }
   flag.conv<-0; #flag whether maximum iteration is achieved
 
@@ -116,7 +117,7 @@ siqr<-function (y, X, tau=0.5, beta.inital=NULL, maxiter=40, tol=1e-9, method = 
   n<-NROW(y); d<-NCOL(X);
   a<-rep(0,n); b<-rep(0,n); #h<-rep(0,n);
 
-  iter<-1;
+  iter<-0;
   beta.old<-2*beta.new;
 
 
@@ -124,6 +125,8 @@ while((iter < maxiter) & (sum((beta.new-beta.old)^2)>tol))
 #while(iter < maxiter)
  {
  #print(iter)
+ #print(beta.new)
+
  beta.old<-beta.new;
  iter<-iter+1;
  ####################################
@@ -181,10 +184,8 @@ while((iter < maxiter) & (sum((beta.new-beta.old)^2)>tol))
 
 } #end iterates over iter;
 
-iter<-iter;
 
-flag.conv<-(iter < maxiter) ;# = 1 if converge; =0 if not converge
-#flag.conv<- 1- ((iter=maxiter)&(sum((beta.new-beta.old)^2)<tol))
+flag.conv<-(iter < maxiter)
 
 beta<-beta.new;
 names(beta) <- colnames(X)
@@ -215,7 +216,7 @@ list(beta=beta,flag.conv=flag.conv,X=X,y=y,yhat=yhat,tau=tau,rqfit=fit,MSAE = R)
 plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
   si <- model.obj$X%*%model.obj$beta
   y <- model.obj$y
-  plot(si,y,xlab = "Single Index", ylab = "Predicted Y",col="gray");
+  plot(si,y,xlab = "Single Index", ylab = "Predicted Y",col="gray",main="Fitted Quantiles Plot");
   lines(sort(si),model.obj$yhat[order(si)],lty=1,lwd=1.5,col="red");
 
   if(bootstrap.interval){

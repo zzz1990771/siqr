@@ -24,7 +24,7 @@ output: rticles::rjournal_article
 
 ### Boston Housing data
 
-```{r eval = FALSE}
+```{r eval = TRUE}
 #source the functions. Will be changed to load package
 source("../R/SINDEXQ_fun.R")
 
@@ -54,19 +54,19 @@ est.coefficient
 ```
 
 
-```{r cache=TRUE, eval = FALSE}
-est.tau02 <- siqr(y0,X,beta.inital = NULL, tau=0.25)
-.plot.siqr(est.tau02,bootstrap.interval = TRUE)
+```{r cache=TRUE, eval = TRUE}
+est.tau25 <- siqr(y0,X,beta.inital = NULL, tau=0.25)
+plot.siqr(est.tau25,bootstrap.interval = TRUE)
 ```
 
-```{r cache=TRUE, eval = FALSE}
-est.tau05 <- siqr(y0,X,beta.inital = NULL, tau=0.5)
-.plot.siqr(est.tau05,bootstrap.interval = TRUE)
+```{r cache=TRUE, eval = TRUE}
+est.tau50 <- siqr(y0,X,beta.inital = NULL, tau=0.5)
+plot.siqr(est.tau50,bootstrap.interval = TRUE)
 ```
 
-```{r cache=TRUE, eval = FALSE}
-est.tau08 <- siqr(y0,X,beta.inital = NULL, tau=0.75)
-.plot.siqr(est.tau08,bootstrap.interval = TRUE)
+```{r cache=TRUE, eval = TRUE}
+est.tau75 <- siqr(y0,X,beta.inital = NULL, tau=0.75)
+plot.siqr(est.tau75,bootstrap.interval = TRUE)
 ```
 
 ### Simulation
@@ -76,7 +76,7 @@ est.tau08 <- siqr(y0,X,beta.inital = NULL, tau=0.75)
 ```{r eval=FALSE}
 n <- 400
 beta0 <- c(1, 1, 1)/sqrt(3)
-n.sim <- 4
+n.sim <- 200
 tau.vec <- c(0.25,0.5,0.75)
 tau <- tau.vec[1]
 
@@ -85,20 +85,64 @@ data <- generate.data(n, true.theta=beta0, setting = "setting1",ncopy = n.sim)
 #paralell 
 library(parallel)
 library(foreach)
-cl<- makeCluster(4)
+cl<- makeCluster(12)
 doParallel::registerDoParallel(cl)
-sim.results <- foreach(m = 1:n.sim,.combine = "rbind") %dopar% {
+sim.results.50 <- foreach(m = 1:n.sim,.combine = "rbind") %dopar% {
   X <- data$X
   Y <- data$Y[[m]]
-  est <- siqr(Y, X, beta.inital = NULL, tau=tau,maxiter = 20,tol = 1e-6)
-  est$beta
+  est <- siqr(Y, X, beta.inital = c(2,1,0), tau=0.5,maxiter = 30,tol = 1e-8)
+  if(est$flag.conv == 0){
+    return(NULL)
+  }else{
+    return(est$beta)
+  }
+}
+
+sim.results.25 <- foreach(m = 1:n.sim,.combine = "rbind") %dopar% {
+  X <- data$X
+  Y <- data$Y[[m]]
+  est <- siqr(Y, X, beta.inital = c(2,1,0), tau=0.25,maxiter = 30,tol = 1e-8)
+  if(est$flag.conv == 0){
+    return(NULL)
+  }else{
+    return(est$beta)
+  }
+}
+sim.results.75 <- foreach(m = 1:n.sim,.combine = "rbind") %dopar% {
+  X <- data$X
+  Y <- data$Y[[m]]
+  est <- siqr(Y, X, beta.inital = c(2,1,0), tau=0.75,maxiter = 30,tol = 1e-8)
+  if(est$flag.conv == 0){
+    return(NULL)
+  }else{
+    return(est$beta)
+  }
 }
 stopCluster(cl)
 ```
 
 
 
+```{r}
+sim.results.25 <- readRDS("./sim1.results25.RDS")
+sim.results.50 <- readRDS("./sim1.results50.RDS")
+sim.results.75 <- readRDS("./sim1.results75.RDS")
+```
 
+```{r}
+boxplot(data.frame((sim.results.25)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient Estimates, tau = 0.25",horizontal = F)
+```
+```{r}
+boxplot(data.frame((sim.results.50)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient , tau = 0.50",horizontal = F)
+```
+
+```{r}
+boxplot(data.frame((sim.results.75)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient Estimates, tau = 0.75",horizontal = F)
+```
+```{r cache=TRUE, eval = FALSE}
+est.sim.05 <- siqr(data$Y[[1]],data$X,beta.inital = NULL, tau=0.5)
+plot.siqr(est.sim.05,bootstrap.interval = TRUE)
+```
 
 #### Setting 3
 
@@ -139,13 +183,18 @@ est.se
 ```
 
 ```{r}
-boxplot(data.frame((sim.results)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient Estimates",horizontal = F)
+boxplot(data.frame((sim.results)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient Estimates, example 2",horizontal = F)
 ```
 
 
-```{r cache=TRUE, eval = FALSE}
+```{r cache=TRUE, eval = TRUE}
+n <- 400
+beta0 <- c(1, 2)/sqrt(5)
+n.sim <- 100
+tau <- 0.5
+data <- generate.data(n, true.theta=beta0, setting = "setting3",ncopy = 2)
 est.sim.05 <- siqr(data$Y[[1]],data$X,beta.inital = NULL, tau=0.5)
-.plot.siqr(est.sim.05,bootstrap.interval = TRUE)
+plot.siqr(est.sim.05,bootstrap.interval = TRUE)
 ```
 
 ```{r eval = FALSE}
