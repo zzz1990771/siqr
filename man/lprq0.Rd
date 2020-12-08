@@ -3,7 +3,7 @@
 \name{lprq0}
 \alias{lprq0}
 \title{A supporting function that return the local polynomial regression quantile.
-This estimates the quantile and its derivative at the point x_0}
+This estimates the quantile and its derivative at the point x.0}
 \usage{
 lprq0(x, y, h, tau = 0.5, x0)
 }
@@ -21,5 +21,5 @@ fv  quantile est; dv - quantile derivative est
 }
 \description{
 A supporting function that return the local polynomial regression quantile.
-This estimates the quantile and its derivative at the point x_0
+This estimates the quantile and its derivative at the point x.0
 }

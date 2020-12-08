@@ -26,6 +26,7 @@ output: rticles::rjournal_article
 
 ```{r eval = TRUE}
 #source the functions. Will be changed to load package
+
 source("../R/SINDEXQ_fun.R")
 
 #load data from MASS
@@ -183,7 +184,7 @@ est.se
 ```
 
 ```{r}
-boxplot(data.frame((sim.results)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient Estimates, example 2",horizontal = F)
+boxplot(data.frame((sim.results)), outline=T,notch=T,range=1,main = "Boxplots of Coefficient Estimates, Example 2",horizontal = F)
 ```
 
 

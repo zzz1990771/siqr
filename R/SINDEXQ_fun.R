@@ -1,22 +1,16 @@
-#main program for simulations
-#contains: library, utility, data, estimation
-#July 5, 2006; by Tracy Wu
-
-##1.  invoke libraries
-
-################################################################################
-#library(stats);
-#library(quantreg); #will call function lprq(), rq()
-#library(lokern); # call function glkerns() to compute h.mean
-#library(mda) #call for polyreg(), this is not the right polyreg; use own
-#library(KernSmooth);
-#################################################################################
-
-##2.  utility functions
-
-
-## Data generation function for simulation and demonstration
-## A sine-bump setting has been employed.
+#' Data generation function for simulation and demonstration
+#' There are three settings.
+#'
+#' @param n sample size
+#' @param true.theta true single-index coefficients,
+#' default is c(1,1,1)/sqrt(3) for setting 1 and c(1,2)/sqrt(5) for other settings
+#' @param sigma the standard deviation of error term
+#' @param setting chose from three settings
+#' @param ncopy generates multiple copies of data for Monte Carlo simulations
+#'
+#' @return X  predictors
+#' @return Y  response variables
+#' @return single.index.values single index term
 generate.data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1){
 
   if(setting == "setting1"){
@@ -65,8 +59,6 @@ generate.data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1
 #'
 #' @return x0  a scalar
 #' @return fv  quantile est; dv - quantile derivative est
-
-
 lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 {
     require(quantreg)

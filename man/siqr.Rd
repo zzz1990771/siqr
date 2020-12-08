@@ -5,24 +5,32 @@
 \title{Main estimation function of single index quantile regression model.
 a two step method.}
 \usage{
-siqr(y, X, p, gamma.inital, maxiter, tol)
+siqr(
+  y,
+  X,
+  tau = 0.5,
+  beta.inital = NULL,
+  maxiter = 40,
+  tol = 1e-09,
+  method = "own"
+)
 }
 \arguments{
 \item{y}{response vector;}
 
 \item{X}{covariate matrix;}
 
-\item{p}{left-tail probability (quantile index), scalar}
+\item{tau}{left-tail probability (quantile index), scalar}
 
-\item{gamma.inital}{starting value of gamma, the single index cooefficients}
+\item{beta.inital}{starting value of beta, the single index coefficients}
 
 \item{maxiter}{max iteration number}
 
 \item{tol}{toleration for convergence}
 }
 \value{
-gamma - index direction, unit norm, first nonneg component
-         flag.conv  - whether the iterations converge
+beta - the fitted single index coefficients with unit norm and first component being non negative
+        flag.conv  - whether the iterations converge
 }
 \description{
 Main estimation function of single index quantile regression model.
