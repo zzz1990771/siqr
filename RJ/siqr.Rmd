@@ -25,9 +25,9 @@ output: rticles::rjournal_article
 ### Boston Housing data
 
 ```{r eval = TRUE}
-#source the functions. Will be changed to load package
-
-source("../R/SINDEXQ_fun.R")
+# install.packages("quantreg","KernSmooth")
+# install.packages(pkgs= "https://github.com/zzz1990771/siqr/raw/master/siqr_0.1.0.zip", repos = NULL, type = "win.binary")
+library(siqr)
 
 #load data from MASS
 library(MASS)

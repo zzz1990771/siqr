@@ -261,5 +261,24 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
 }
 
 
+#' Function to print summary
+#'
+#' @param siqr.object the single index quantile regression model object
+#'
+#' @return the summarized information object
+print.summary.siqr <- summary.siqr <- function(object, digits = max(5, getOption("digits") - 3),
+                              signif.stars = getOption("show.signif.stars"), ...)
 
+{
+  cat("Tau: ",object$tau,"\n",sep="")
+
+  if (length(object$beta)>0)
+  { cat("\nsingle index coefficients:\n")
+    printCoefmat(data.frame(Coefficients=est$beta), digits = digits, signif.stars = signif.stars, na.print = "NA", ...)
+  }
+  cat("\n")
+  cat("Model MSAE: ",object$MSAE,"\n",sep="")
+  cat("Model convergence: ",object$flag.conv,"\n",sep="")
+  invisible(object)
+}
 
