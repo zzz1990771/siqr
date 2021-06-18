@@ -42,10 +42,10 @@ beta0 <- NULL
 tau.vec <- c(0.25,0.5,0.75)
 est.coefficient <- matrix(NA, nrow = length(tau.vec), ncol = 5)
 est.coefficient[,1] <- tau.vec
-for (i in 1:length(tau.vec)){
+system.time(for (i in 1:length(tau.vec)){
   est <- siqr(y0,X,beta.inital = beta0, tau=tau.vec[i],maxiter = 20,tol = 1e-6)
   est.coefficient[i,2:5] <- est$beta
-}
+})
 colnames(est.coefficient) <- c("quantile tau",colnames(X))
 #print out estimated coefficients
 est.coefficient

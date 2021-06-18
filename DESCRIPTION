@@ -7,6 +7,6 @@ Maintainer: The package maintainer <yourself@somewhere.net>
 Description: The package provides functions that allow users to fit SIQR models,predict, provide standard errors of the single-index coefficients via bootstrap, and visualize the estimated univariate function. See Wu, Yu, Yu (2010) at https://dl.acm.org/doi/abs/10.1016/j.jmva.2010.02.003
 License: What license is it under?
 Encoding: UTF-8
-Imports: stats,quantreg,KernSmooth
+Depends: R (>= 3.6.0), stats,quantreg,KernSmooth
 LazyData: true
 RoxygenNote: 7.1.1
