@@ -82,7 +82,8 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #' @param y response vector;
 #' @param X covariate matrix;
 #' @param tau left-tail probability (quantile index), scalar
-#' @param beta.inital starting value of beta, the single index coefficients
+#' @param beta.initial starting value of beta, the single index coefficients
+#' @param h user defined 
 #' @param maxiter max iteration number
 #' @param tol toleration for convergence
 #'
@@ -91,16 +92,16 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #' @note in step 2 of the proposed algorithm, we may consider random sampling a "subsample" of size,
 #'       say 5n, of the augmented sample(with sample size n^2);
 #'        do it several times and take average of the estimates(need to write a sampling step, but not in this utility function
-siqr<-function (y, X, tau=0.5, beta.inital=NULL, hp=NULL, maxiter=40, tol=1e-9, method = "own")
+siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=40, tol=1e-9, method = "own")
 {
   require(quantreg)
-  if(is.null(beta.inital)){
-    beta.inital <- coef(rq(y~X,tau=tau))[-1]
-    beta.inital[1] <- abs(beta.inital[1])
+  if(is.null(beta.initial)){
+    beta.initial <- coef(rq(y~X,tau=tau))[-1]
+    beta.initial[1] <- abs(beta.initial[1])
   }
   flag.conv<-0; #flag whether maximum iteration is achieved
   
-  beta.new<-beta.inital; #starting value
+  beta.new<-beta.initial; #starting value
   if(method == "Wu"){
   }else{
     beta.new<-sign(beta.new[1])*beta.new/sqrt(sum(beta.new^2));
@@ -135,17 +136,16 @@ siqr<-function (y, X, tau=0.5, beta.inital=NULL, hp=NULL, maxiter=40, tol=1e-9, 
     
     
     hm<-KernSmooth::dpill(x, y);
-    if(is.null(hp)){
-      hp<-hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
+    if(is.null(h)){
+      h<-hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
     }else{
-      hp<-hp;
+      h<-h;
     }
     
     x0<-0;
-    for(j in 1:n)
-    {
+    for(j in 1:n){
       x0<-x[j];
-      fit<-lprq0(x, y, hp, tau, x0)
+      fit<-lprq0(x, y, h, tau, x0)
       a[j]<-fit$fv;
       b[j]<-fit$dv;
     }
@@ -155,28 +155,28 @@ siqr<-function (y, X, tau=0.5, beta.inital=NULL, hp=NULL, maxiter=40, tol=1e-9, 
     #############################
     # here, let v.j=1/n;
     ynew<-rep(0,n^2);
-    xnew<-matrix(xnew,nrow=n^2,ncol=d);
+    xnew<-matrix(0,nrow=n^2,ncol=d);
 
-    ynew <- sapply(y,function(x){x-a})
+    ynew <- as.vector(sapply(y,function(x){x-a}))
     for (i in 1:n){
       for (j in 1:n){ 
         xnew[(i-1)*n+j,]<-b[j]*(X[i,]-X[j,]);
       }
     }
     
-    xg<-rep(0,n^2); #x*beta
-    for(jj in 1:d){
-      xg<-xg+xnew[,jj]*beta.old[jj]; #n-sequence, dim=null
-    }
     xgh<-rep(0,n^2); #x*beta/h
-    for (i in 1:n){
-      for (j in 1:n){
-        xgh[(i-1)*n+j]<-xg[(i-1)*n+j]/hp;
-      }
+    for(jj in 1:d){
+      xgh<-xg+xnew[,jj]*beta.old[jj]/h; #n-sequence, dim=null
     }
+    
     wts<-dnorm(xgh);
+    ynew_ws <- ynew*wts;
+    xnew_ws <- xnew*wts;
     #fit<-rq(ynew ~0+ xnew, weights = wts, tau = tau, method="fn") ; #pfn for very large problems
-    fit<-rq(ynew ~0+ xnew, weights = wts, tau = tau, ci = FALSE) ; #default: br method, for several thousand obs
+    fit<-rq(ynew_ws ~0+ xnew_ws, tau = tau, ci = FALSE) ; #default: br method, for several thousand obs
+    
+    
+    
     # 0, to exclude intercept
     beta.new<-fit$coef;
     beta.new<-sign(beta.new[1])*beta.new/sqrt(sum(beta.new^2));   #normalize
@@ -191,15 +191,15 @@ siqr<-function (y, X, tau=0.5, beta.inital=NULL, hp=NULL, maxiter=40, tol=1e-9, 
   
   si <- X%*%beta
   hm <- KernSmooth::dpill(si,y);
-  if(is.null(hp)){
-    hp<-hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
+  if(is.null(h)){
+    h<-hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
   }else{
-    hp<-hp;
+    h<-h;
   }
   
   yhat<-rep(0,n);
   for (i in 1:length(y)){
-    local.fit<-lprq0(si, y, hp, tau, si[i]);
+    local.fit<-lprq0(si, y, h, tau, si[i]);
     yhat[i]<-local.fit$fv;
   }
   
@@ -225,7 +225,7 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
   if(bootstrap.interval){
     tau <- model.obj$tau
     hm <- KernSmooth::dpill(si,y)
-    hp <- hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2
+    h <- hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2
 
     #get residual
     res <- y-model.obj$yhat
@@ -240,7 +240,7 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
     #   bs.index<-sample(n,replace=T)
     #   res.B<-res[bs.index]
     #   y.B<-model.obj$yhat+res.B
-    #   fit.B <- siqr(y.B, X, beta.inital = beta0, tau=tau,maxiter = 20,tol = 1e-6, method = "Wu")
+    #   fit.B <- siqr(y.B, X, beta.initial = beta0, tau=tau,maxiter = 20,tol = 1e-6, method = "Wu")
     #   y.hat.B[,b] <- fit.B$yhat
     # }
 
@@ -254,7 +254,7 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
         bs.index<-sample(n,replace=T)
         res.B<-res[bs.index]
         y.B<-model.obj$yhat+res.B
-        fit.B <- lprq0(si, y.B, hp, tau=tau, si[i])
+        fit.B <- lprq0(si, y.B, h, tau=tau, si[i])
         y.hat.B[i,b] <- fit.B$fv
       }
     }
