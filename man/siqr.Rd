@@ -9,7 +9,8 @@ siqr(
   y,
   X,
   tau = 0.5,
-  beta.inital = NULL,
+  beta.initial = NULL,
+  h = NULL,
   maxiter = 40,
   tol = 1e-09,
   method = "own"
@@ -22,7 +23,9 @@ siqr(
 
 \item{tau}{left-tail probability (quantile index), scalar}
 
-\item{beta.inital}{starting value of beta, the single index coefficients}
+\item{beta.initial}{starting value of beta, the single index coefficients}
+
+\item{h}{user defined}
 
 \item{maxiter}{max iteration number}
 

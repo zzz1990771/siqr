@@ -8,7 +8,9 @@ This estimates the quantile and its derivative at the point x.0}
 lprq0(x, y, h, tau = 0.5, x0)
 }
 \arguments{
-\item{x}{covariate sequence; y - response sequence; they form a sample.}
+\item{x}{covariate sequence;}
+
+\item{y}{response sequence;}
 
 \item{h}{bandwidth(scalar); tau - left-tail probability}
 
