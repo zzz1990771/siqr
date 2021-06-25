@@ -11,8 +11,8 @@ siqr(
   tau = 0.5,
   beta.initial = NULL,
   h = NULL,
-  maxiter = 40,
-  tol = 1e-09,
+  maxiter = 30,
+  tol = 1e-08,
   method = "own"
 )
 }
@@ -25,7 +25,7 @@ siqr(
 
 \item{beta.initial}{starting value of beta, the single index coefficients}
 
-\item{h}{user defined}
+\item{h}{user-defined bandwidth}
 
 \item{maxiter}{max iteration number}
 

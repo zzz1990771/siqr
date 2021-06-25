@@ -3,3 +3,5 @@ MASS
 SparseM
 quantreg
 foreach
+KernSmooth
+siqr

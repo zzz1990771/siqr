@@ -5,11 +5,13 @@
 \usepackage{amsmath,amssymb,array}
 \usepackage{booktabs}
 
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
-%% load any required packages FOLLOWING this line
-%for algorithm
-\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
-\usepackage{float}
+% Pandoc citation processing
+
+% Any extra LaTeX you need in the preamble
+
 
 \begin{document}
 
@@ -20,9 +22,8 @@
 \year{20ZZ}
 \month{AAAA}
 
-%% replace RJtemplate with your article
 \begin{article}
-  \input{SIQR}
+  \input{siqr}
 \end{article}
 
 \end{document}

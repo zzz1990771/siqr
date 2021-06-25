@@ -12,7 +12,9 @@ lprq0(x, y, h, tau = 0.5, x0)
 
 \item{y}{response sequence;}
 
-\item{h}{bandwidth(scalar); tau - left-tail probability}
+\item{h}{bandwidth(scalar);}
+
+\item{tau}{- left-tail probability}
 
 \item{x0}{point at which the quantile is estimated}
 }
