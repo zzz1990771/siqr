@@ -20,25 +20,25 @@ generate.data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1
     c1 = sqrt(3)/2-1.645/sqrt(12) #0.3912
     c2 = sqrt(3)/2+1.645/sqrt(12)#1.3409
 
-    X = matrix(runif(length(true.theta)*n), ncol=length(true.theta))
+    X = matrix(stats::runif(length(true.theta)*n), ncol=length(true.theta))
     true.theta = sign(true.theta[1])*true.theta/sqrt(sum(true.theta^2));
     U = X%*%true.theta
     si = sin( (U-c1)*pi/(c2 -c1) )
-    y = si + rnorm(length(si),0,sigma)
+    y = si + stats::rnorm(length(si),0,sigma)
     if(ncopy>1){
-      ylist <- lapply(vector(mode = "list", length = ncopy),function(x){si + rnorm(n,0,sigma)})
+      ylist <- lapply(vector(mode = "list", length = ncopy),function(x){si + stats::rnorm(n,0,sigma)})
     }
   }else if(setting == "setting2"){
 
   }else if(setting == "setting3"){
     true.theta = if(is.null(true.theta)) c(1, 2)/sqrt(5) else true.theta
-    X = matrix(rnorm(length(true.theta)*n), ncol=length(true.theta))
+    X = matrix(stats::rnorm(length(true.theta)*n), ncol=length(true.theta))
     U = X%*%true.theta
     si = 5*cos(U)+exp(-U^2)
-    e = rexp(n,rate=.5)
+    e = stats::rexp(n,rate=.5)
     y = si+e;
     if(ncopy>1){
-      ylist <- lapply(vector(mode = "list", length = ncopy),function(x){si + rexp(n,rate=.5)})
+      ylist <- lapply(vector(mode = "list", length = ncopy),function(x){si + stats::rexp(n,rate=.5)})
     }
   }
 
@@ -63,13 +63,12 @@ generate.data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1
 #' @return fv  quantile est; dv - quantile derivative est
 lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 {
-    require(quantreg)
     fv <- x0
     dv <- x0
 
     z <- x - x0
-    wx <- dnorm(z/h)
-    r <- rq(y ~ z, weights = wx, tau = tau, ci = FALSE)
+    wx <- stats::dnorm(z/h)
+    r <- quantreg::rq(y ~ z, weights = wx, tau = tau, ci = FALSE)
     fv <- r$coef[1]
     dv <- r$coef[2]
     list(x0 = x0, fv = fv, dv = dv)
@@ -79,7 +78,6 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #' Main estimation function of single index quantile regression model.
 #' a two step method.
 #'
-#'
 #' @param y response vector;
 #' @param X covariate matrix;
 #' @param tau left-tail probability (quantile index), scalar
@@ -88,21 +86,40 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #' @param maxiter max iteration number
 #' @param tol toleration for convergence
 #'
-#' @return beta - the fitted single index coefficients with unit norm and first component being non negative
+#' @return a siqr object, which includes:
+#'         beta - the fitted single index coefficients with unit norm and first component being non negative
 #'         flag.conv  - whether the iterations converge
-#' @note in step 2 of the proposed algorithm, we may consider random sampling a "subsample" of size,
-#'       say 5n, of the augmented sample(with sample size n^2);
-#'        do it several times and take average of the estimates(need to write a sampling step, but not in this utility function
-siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=30, tol=1e-8, method = "own")
+#' @examples
+#' #load data from MASS
+#' #A subset has been used here for demostration.
+#' data <- MASS::Boston[1:50,]
+#' #data transformation
+#' medv<- data$medv
+#' RM <- data$rm
+#' logTAX <- log(data$tax)
+#' PTRATIO <- data$ptratio
+#' logLSTAT <- log(data$lstat)
+#' X <- cbind(RM,logTAX,PTRATIO,logLSTAT)
+#' y0<-medv - mean(medv)
+#'
+#' #initials
+#' beta0 <- NULL
+#' #quantile
+#' tau = 0.25
+#' siqr.result <- siqr(y0,X,beta.initial = beta0, tau=tau)
+#' summary(siqr.result)
+#'
+#' @export
+siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=30, tol=1e-8)
 {
-  require(quantreg)
   if(is.null(beta.initial)){
-    beta.initial <- coef(rq(y~X,tau=tau))[-1]
+    beta.initial <- stats::coef(quantreg::rq(y~X,tau=tau))[-1]
     beta.initial[1] <- abs(beta.initial[1])
   }
   flag.conv<-0; #flag whether maximum iteration is achieved
 
   beta.new<-beta.initial; #starting value
+  method = "own"
   if(method == "Wu"){
   }else{
     beta.new<-sign(beta.new[1])*beta.new/sqrt(sum(beta.new^2));
@@ -138,7 +155,7 @@ siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=30, tol=1e-8, 
 
     hm<-KernSmooth::dpill(x, y);
     if(is.null(h)){
-      h<-hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
+      h<-hm*(tau*(1-tau)/(stats::dnorm(stats::qnorm(tau)))^2)^.2;
     }else{
       h<-h;
     }
@@ -170,14 +187,11 @@ siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=30, tol=1e-8, 
       xgh<-xgh+xnew[,jj]*beta.old[jj]/h; #n-sequence, dim=null
     }
 
-    wts<-dnorm(xgh);
+    wts<-stats::dnorm(xgh);
     ynew_ws <- ynew*wts;
     xnew_ws <- xnew*wts;
-    #fit<-rq(ynew ~0+ xnew, weights = wts, tau = tau, method="fn") ; #pfn for very large problems
-    fit<-rq(ynew_ws ~0+ xnew_ws, tau = tau, ci = FALSE) ; #default: br method, for several thousand obs
-
-
-
+    #fit<-quantreg::rq(ynew ~0+ xnew, weights = wts, tau = tau, method="fn") ; #pfn for very large problems
+    fit<-quantreg::rq(ynew_ws ~0+ xnew_ws, tau = tau, ci = FALSE) ; #default: br method, for several thousand obs
     # 0, to exclude intercept
     beta.new<-fit$coef;
     beta.new<-sign(beta.new[1])*beta.new/sqrt(sum(beta.new^2));   #normalize
@@ -193,7 +207,7 @@ siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=30, tol=1e-8, 
   si <- X%*%beta
   hm <- KernSmooth::dpill(si,y);
   if(is.null(h)){
-    h<-hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2;
+    h<-hm*(tau*(1-tau)/(stats::dnorm(stats::qnorm(tau)))^2)^.2;
   }else{
     h<-h;
   }
@@ -207,26 +221,28 @@ siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=30, tol=1e-8, 
   err<- y-yhat;
   R<- sum(abs(err)+(2*tau-1)*err)/n;
 
-  list(beta=beta,flag.conv=flag.conv,X=X,y=y,yhat=yhat,tau=tau,rqfit=fit,MSAE = R)
+  siqr_ojb <- list(beta=beta,flag.conv=flag.conv,X=X,y=y,yhat=yhat,tau=tau,rqfit=fit,MSAE = R)
+  class(siqr_ojb) <- "siqr"
+  return(siqr_ojb)
 }
 
 
 #' plot function of siqr
 #'
-#'
 #' @param model.obj The SIQR model object
+#' @param bootstrap.interval whether to calculate and plot bootstrap interval
 #'
 #' @return None
 plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
   si <- model.obj$X%*%model.obj$beta
   y <- model.obj$y
   plot(si,y,xlab = "Single Index", ylab = "Predicted Y",col="gray",main="Fitted Quantile Plot");
-  lines(sort(si),model.obj$yhat[order(si)],lty=1,lwd=1.5,col="red");
+  graphics::lines(sort(si),model.obj$yhat[order(si)],lty=1,lwd=1.5,col="red");
 
   if(bootstrap.interval){
     tau <- model.obj$tau
     hm <- KernSmooth::dpill(si,y)
-    h <- hm*(tau*(1-tau)/(dnorm(qnorm(tau)))^2)^.2
+    h <- hm*(tau*(1-tau)/(stats::dnorm(stats::qnorm(tau)))^2)^.2
 
     #get residual
     res <- y-model.obj$yhat
@@ -260,25 +276,29 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
       }
     }
 
-    #get sd of bootstrap Y.hat
-    se.yhat <- apply(y.hat.B,1,sd)
-    #2*sd +/- original y.hat to form the interval
+    #get stats::sd of bootstrap Y.hat
+    se.yhat <- apply(y.hat.B,1,stats::sd)
+    #2*stats::sd +/- original y.hat to form the interval
     yhat.B.025 <- model.obj$yhat - 2 * se.yhat
     yhat.B.975 <- model.obj$yhat + 2 * se.yhat
     #plot
     #plot.si(model.obj = model.obj)
-    lines(sort(si),yhat.B.025[order(si)],lty=6,lwd=1.5,col="blue")
-    lines(sort(si),yhat.B.975[order(si)],lty=6,lwd=1.5,col="blue")
+    graphics::lines(sort(si),yhat.B.025[order(si)],lty=6,lwd=1.5,col="blue")
+    graphics::lines(sort(si),yhat.B.975[order(si)],lty=6,lwd=1.5,col="blue")
   }
 }
 
 
 #' Function to print summary
 #'
-#' @param siqr.object the single index quantile regression model object
+#' @param object the single index quantile regression model object
+#' @param digits controls digits in output
+#' @param signif.stars whether show the significance stars
+#' @param ... extra arguments
 #'
 #' @return the summarized information object
-print.summary.siqr <- summary.siqr <- function(object, digits = max(5, getOption("digits") - 3),
+#' @exportS3Method
+summary.siqr <- function(object, digits = max(5, getOption("digits") - 3),
                               signif.stars = getOption("show.signif.stars"), ...)
 
 {
@@ -286,7 +306,7 @@ print.summary.siqr <- summary.siqr <- function(object, digits = max(5, getOption
 
   if (length(object$beta)>0)
   { cat("\nsingle index coefficients:\n")
-    printCoefmat(data.frame(Coefficients=est$beta), digits = digits, signif.stars = signif.stars, na.print = "NA", ...)
+    stats::printCoefmat(data.frame(Coefficients=object$beta), digits = digits, signif.stars = signif.stars, na.print = "NA", ...)
   }
   cat("\n")
   cat("Model MSAE: ",object$MSAE,"\n",sep="")

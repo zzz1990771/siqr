@@ -1,13 +1,18 @@
 Package: siqr
 Type: Package
-Title: An R Package for Single-index Quantile Regression
-Version: 0.2.0
+Title: An R Package for Single-Index Quantile Regression
+Version: 0.8.0
+Language: en-US
 Authors@R: c(
     person("Tianhai", "Zu", email = "zuti@mail.uc.edu", role = "cre"),
     person("Yan", "Yu",  role = "aut"))
-Description: The package provides functions that allow users to fit SIQR models,predict, provide standard errors of the single-index coefficients via bootstrap, and visualize the estimated univariate function. See Wu, Yu, Yu (2010) at https://dl.acm.org/doi/abs/10.1016/j.jmva.2010.02.003
-License: What license is it under?
+Description: Single-Index Quantile Regression is effective in some scenarios. We provides functions that allow users to fit Single-Index Quantile Regression model. It also provides functions to do prediction, estimate standard errors of the single-index coefficients via bootstrap, and visualize the estimated univariate function. Please see W., Y., Y. (2010) <doi:10.1016/j.jmva.2010.02.003> for details.
+License: GPL-3
 Encoding: UTF-8
-Depends: R (>= 3.6.0), stats,quantreg,KernSmooth
-LazyData: true
-RoxygenNote: 7.1.1
+Depends: R (>= 3.6.0)
+Imports:
+    MASS,
+    stats,
+    quantreg,
+    KernSmooth
+RoxygenNote: 7.1.2
