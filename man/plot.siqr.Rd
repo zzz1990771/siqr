@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{model.obj}{The SIQR model object}
+
+\item{bootstrap.interval}{whether to calculate and plot bootstrap interval}
 }
 \value{
 None

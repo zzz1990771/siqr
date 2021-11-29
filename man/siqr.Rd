@@ -5,16 +5,7 @@
 \title{Main estimation function of single index quantile regression model.
 a two step method.}
 \usage{
-siqr(
-  y,
-  X,
-  tau = 0.5,
-  beta.initial = NULL,
-  h = NULL,
-  maxiter = 30,
-  tol = 1e-08,
-  method = "own"
-)
+siqr(y, X, tau = 0.5, beta.initial = NULL, h = NULL, maxiter = 30, tol = 1e-08)
 }
 \arguments{
 \item{y}{response vector;}
@@ -32,15 +23,32 @@ siqr(
 \item{tol}{toleration for convergence}
 }
 \value{
-beta - the fitted single index coefficients with unit norm and first component being non negative
+a siqr object, which includes:
+        beta - the fitted single index coefficients with unit norm and first component being non negative
         flag.conv  - whether the iterations converge
 }
 \description{
 Main estimation function of single index quantile regression model.
 a two step method.
 }
-\note{
-in step 2 of the proposed algorithm, we may consider random sampling a "subsample" of size,
-      say 5n, of the augmented sample(with sample size n^2);
-       do it several times and take average of the estimates(need to write a sampling step, but not in this utility function
+\examples{
+#load data from MASS
+#A subset has been used here for demostration.
+data <- MASS::Boston[1:50,]
+#data transformation
+medv<- data$medv
+RM <- data$rm
+logTAX <- log(data$tax)
+PTRATIO <- data$ptratio
+logLSTAT <- log(data$lstat)
+X <- cbind(RM,logTAX,PTRATIO,logLSTAT)
+y0<-medv - mean(medv)
+
+#initials
+beta0 <- NULL
+#quantile
+tau = 0.25
+siqr.result <- siqr(y0,X,beta.initial = beta0, tau=tau)
+summary(siqr.result)
+
 }
