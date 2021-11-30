@@ -11,6 +11,7 @@
 #' @return X  predictors
 #' @return Y  response variables
 #' @return single.index.values single index term
+#' @export
 generate.data <- function(n,true.theta=NULL,sigma=0.1,setting="setting1",ncopy=1){
 
   if(setting == "setting1"){
@@ -90,22 +91,16 @@ lprq0<-function (x, y, h, tau = 0.5,x0)  #used in step 1 of the algorithm
 #'         beta - the fitted single index coefficients with unit norm and first component being non negative
 #'         flag.conv  - whether the iterations converge
 #' @examples
-#' #load data from MASS
-#' #A subset has been used here for demostration.
-#' data <- MASS::Boston[1:50,]
-#' #data transformation
-#' medv<- data$medv
-#' RM <- data$rm
-#' logTAX <- log(data$tax)
-#' PTRATIO <- data$ptratio
-#' logLSTAT <- log(data$lstat)
-#' X <- cbind(RM,logTAX,PTRATIO,logLSTAT)
-#' y0<-medv - mean(medv)
+#' #generate data
+#' set.seed(2021)
+#' data <- generate.data(50)
+#' X <- data$X
+#' y0<- data$Y
 #'
 #' #initials
 #' beta0 <- NULL
 #' #quantile
-#' tau = 0.25
+#' tau = 0.75
 #' siqr.result <- siqr(y0,X,beta.initial = beta0, tau=tau)
 #' summary(siqr.result)
 #'

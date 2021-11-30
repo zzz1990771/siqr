@@ -32,22 +32,16 @@ Main estimation function of single index quantile regression model.
 a two step method.
 }
 \examples{
-#load data from MASS
-#A subset has been used here for demostration.
-data <- MASS::Boston[1:50,]
-#data transformation
-medv<- data$medv
-RM <- data$rm
-logTAX <- log(data$tax)
-PTRATIO <- data$ptratio
-logLSTAT <- log(data$lstat)
-X <- cbind(RM,logTAX,PTRATIO,logLSTAT)
-y0<-medv - mean(medv)
+#generate data
+set.seed(2021)
+data <- generate.data(50)
+X <- data$X
+y0<- data$Y
 
 #initials
 beta0 <- NULL
 #quantile
-tau = 0.25
+tau = 0.75
 siqr.result <- siqr(y0,X,beta.initial = beta0, tau=tau)
 summary(siqr.result)
 
