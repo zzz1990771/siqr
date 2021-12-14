@@ -4,10 +4,12 @@
 \alias{plot.siqr}
 \title{plot function of siqr}
 \usage{
-\method{plot}{siqr}(model.obj, bootstrap.interval = FALSE)
+\method{plot}{siqr}(x, ..., bootstrap.interval = FALSE)
 }
 \arguments{
-\item{model.obj}{The SIQR model object}
+\item{x}{The SIQR model object}
+
+\item{...}{optional arguments}
 
 \item{bootstrap.interval}{whether to calculate and plot bootstrap interval}
 }

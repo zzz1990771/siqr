@@ -224,23 +224,26 @@ siqr<-function (y, X, tau=0.5, beta.initial=NULL, h=NULL, maxiter=30, tol=1e-8)
 
 #' plot function of siqr
 #'
-#' @param model.obj The SIQR model object
+#' @param x The SIQR model object
+#' @param ... optional arguments
 #' @param bootstrap.interval whether to calculate and plot bootstrap interval
 #'
 #' @return None
-plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
-  si <- model.obj$X%*%model.obj$beta
-  y <- model.obj$y
+#' @export plot.siqr
+#' @exportS3Method
+plot.siqr <- function(x,..., bootstrap.interval = FALSE){
+  si <- x$X%*%x$beta
+  y <- x$y
   plot(si,y,xlab = "Single Index", ylab = "Predicted Y",col="gray",main="Fitted Quantile Plot");
-  graphics::lines(sort(si),model.obj$yhat[order(si)],lty=1,lwd=1.5,col="red");
+  graphics::lines(sort(si),x$yhat[order(si)],lty=1,lwd=1.5,col="red");
 
   if(bootstrap.interval){
-    tau <- model.obj$tau
+    tau <- x$tau
     hm <- KernSmooth::dpill(si,y)
     h <- hm*(tau*(1-tau)/(stats::dnorm(stats::qnorm(tau)))^2)^.2
 
     #get residual
-    res <- y-model.obj$yhat
+    res <- y-x$yhat
     n <- length(res)
 
     #get bootstrap y.hat
@@ -251,7 +254,7 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
     #   #get residual bootstrap data
     #   bs.index<-sample(n,replace=T)
     #   res.B<-res[bs.index]
-    #   y.B<-model.obj$yhat+res.B
+    #   y.B<-x$yhat+res.B
     #   fit.B <- siqr(y.B, X, beta.initial = beta0, tau=tau,maxiter = 20,tol = 1e-6, method = "Wu")
     #   y.hat.B[,b] <- fit.B$yhat
     # }
@@ -265,7 +268,7 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
         #get residual bootstrap data
         bs.index<-sample(n,replace=T)
         res.B<-res[bs.index]
-        y.B<-model.obj$yhat+res.B
+        y.B<-x$yhat+res.B
         fit.B <- lprq0(si, y.B, h, tau=tau, si[i])
         y.hat.B[i,b] <- fit.B$fv
       }
@@ -274,10 +277,10 @@ plot.siqr <- function(model.obj, bootstrap.interval = FALSE){
     #get stats::sd of bootstrap Y.hat
     se.yhat <- apply(y.hat.B,1,stats::sd)
     #2*stats::sd +/- original y.hat to form the interval
-    yhat.B.025 <- model.obj$yhat - 2 * se.yhat
-    yhat.B.975 <- model.obj$yhat + 2 * se.yhat
+    yhat.B.025 <- x$yhat - 2 * se.yhat
+    yhat.B.975 <- x$yhat + 2 * se.yhat
     #plot
-    #plot.si(model.obj = model.obj)
+    #plot.si(x = x)
     graphics::lines(sort(si),yhat.B.025[order(si)],lty=6,lwd=1.5,col="blue")
     graphics::lines(sort(si),yhat.B.975[order(si)],lty=6,lwd=1.5,col="blue")
   }

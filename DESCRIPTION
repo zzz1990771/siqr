@@ -1,7 +1,7 @@
 Package: siqr
 Type: Package
 Title: An R Package for Single-Index Quantile Regression
-Version: 0.8.0
+Version: 0.8.1
 Language: en-US
 Authors@R: c(
     person("Tianhai", "Zu", email = "zuti@mail.uc.edu", role = "cre"),
